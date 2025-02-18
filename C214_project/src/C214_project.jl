@@ -5,7 +5,7 @@ using Random
 
 include("models/pokemon.jl")
 
-function main()
+function main()::Cint
     url = "https://pokeapi.co/api/v2/pokemon/$(rand(1:1025))"
 
     response = HTTP.get(url)
@@ -20,10 +20,12 @@ function main()
     else
         println("Error: Received status code ", response.status)
     end
+
+    return 0
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
 end
 
-end  # module
+end
