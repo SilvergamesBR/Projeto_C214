@@ -1,6 +1,7 @@
 using JSON3
 
-@enum PokemonType Normal Dark Fire Water Electric Grass Ice Poison Fairy Steel Dragon Ghost Rock Bug
+
+@enum PokemonType Normal Dark Fire Water Electric Grass Ice Poison Fairy Steel Dragon Ghost Rock Ground Bug
 
 const TYPE_MAPPING = Dict(
     "normal"   => Normal,
@@ -16,6 +17,8 @@ const TYPE_MAPPING = Dict(
     "dragon"   => Dragon,
     "ghost"    => Ghost,
     "rock"     => Rock,
+
+    "ground"   => Ground,
     "bug"      => Bug,
 )
 
