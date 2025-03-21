@@ -12,5 +12,8 @@ To run do : ``$ julia --project=. C214_project\src\C214_project.jl``
 
 To build do : ``$ julia --project=. builder.jl``
 
+To test do : ``julia --project=. C214_project/runtests.jl``
+
+
 All commands must be ran in the root directory.
 
