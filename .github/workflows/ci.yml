@@ -29,6 +29,9 @@ jobs:
       - name: Instantiate C214_project Dependencies
         run: julia -e 'using Pkg; Pkg.activate("C214_project"); Pkg.instantiate()'
 
+      - name: Resolve C214_project Dependencies
+        run: julia -e 'using Pkg; Pkg.activate("C214_project"); Pkg.resolve()'
+
       - name: Build Executable
         run: |
           julia --project=. builder.jl
