@@ -26,6 +26,9 @@ jobs:
       - name: Install PackageCompiler
         run: julia --project=. -e 'using Pkg; Pkg.add("PackageCompiler")'
 
+      - name: Instantiate C214_project Dependencies
+        run: julia -e 'using Pkg; Pkg.activate("C214_project"); Pkg.instantiate()'
+
       - name: Build Executable
         run: |
           julia --project=. builder.jl
