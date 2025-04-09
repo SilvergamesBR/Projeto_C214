@@ -8,43 +8,69 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-
       - name: Set up Julia
         uses: julia-actions/setup-julia@v1
         with:
           version: '1.9'
-
       - name: Instantiate Project Dependencies
         run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
+      - name: Build Package
+        run: julia --project=. -e 'using Pkg; Pkg.build()'
 
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Set up Julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.9'
+      - name: Instantiate Project Dependencies
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
       - name: Run Tests and Save Results
         run: |
-          # Run tests and capture output in a log file.
           julia --project=. -e 'using Pkg; Pkg.test()' 2>&1 | tee test_results.log
-
       - name: Upload Test Results Artifact
         if: always()
-        uses: actions/upload-artifact@v3.3.0
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: test_results.log
 
-      - name: Build Package
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Create Artifact
         run: |
-          # Build the package (for example, by running Pkg.build())
-          julia --project=. -e 'using Pkg; Pkg.build()'
-          # Create an artifact; here we zip the repository as an example.
           zip -r package_artifact.zip .
-
       - name: Upload Built Package Artifact
         if: always()
-        uses: actions/upload-artifact@v3.3.0
+        uses: actions/upload-artifact@v4
         with:
           name: built-package
           path: package_artifact.zip
+
+  notification:
+    needs: [build, test]
+    if: needs.build.result == 'failure' || needs.test.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send notification email
+        uses: licenseware/send-email-notification@v1
+        with:
+          api-key: ${{ secrets.SENDGRID_API_KEY }}
+          from-email: ${{ secrets.FROM_EMAIL }}
+          to-email: ${{ secrets.NOTIFICATION_EMAIL }}
+          subject: "GitHub Actions Workflow Failed"
+          markdown-body: |
+            The workflow for ${{ github.repository }} failed. Please check the logs.
