@@ -23,8 +23,8 @@ jobs:
       - name: Instantiate Project Dependencies
         run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
 
-      - name: Add build dependencies
-        run: import Pkg | Pkg.add("PackageCompiler")
+      - name: Install PackageCompiler
+        run: julia --project=. -e 'using Pkg; Pkg.add("PackageCompiler")'
 
       - name: Build Executable
         run: |
