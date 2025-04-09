@@ -8,35 +8,30 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-      - name: Set up Julia
-        uses: julia-actions/setup-julia@v1
-        with:
-          version: '1.9'
-      - name: Instantiate Project Dependencies
-        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
-      - name: Build Package
-        run: julia --project=. -e 'using Pkg; Pkg.build()'
 
-  test:
-    needs: build
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+
       - name: Set up Julia
         uses: julia-actions/setup-julia@v1
         with:
           version: '1.9'
+
       - name: Instantiate Project Dependencies
         run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
-      - name: Run Tests and Save Results
+
+      - name: Build Executable
         run: |
-          julia --project=. -e 'using Pkg; Pkg.test()' 2>&1 | tee test_results.log
+          julia --project=. builder.jl
+
+      - name: Run Tests and Save Results
+        working-directory: C214_project
+        run: |
+          julia --project=. runtests.jl 2>&1 | tee ../test_results.log
+
       - name: Upload Test Results Artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -44,33 +39,9 @@ jobs:
           name: test-results
           path: test_results.log
 
-  package:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-      - name: Create Artifact
-        run: |
-          zip -r package_artifact.zip .
-      - name: Upload Built Package Artifact
+      - name: Upload Built Executable Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: built-package
-          path: package_artifact.zip
-
-  notification:
-    needs: [build, test]
-    if: needs.build.result == 'failure' || needs.test.result == 'failure'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send notification email
-        uses: licenseware/send-email-notification@v1
-        with:
-          api-key: ${{ secrets.SENDGRID_API_KEY }}
-          from-email: ${{ secrets.FROM_EMAIL }}
-          to-email: ${{ secrets.NOTIFICATION_EMAIL }}
-          subject: "GitHub Actions Workflow Failed"
-          markdown-body: |
-            The workflow for ${{ github.repository }} failed. Please check the logs.
+          name: built-executable
+          path: build/*/GetPokemon
