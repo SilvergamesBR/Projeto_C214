@@ -8,9 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -20,7 +19,7 @@ jobs:
         with:
           version: '1.9'
 
-      - name: Instantiate Project Dependencies
+      - name: Instantiate Root Dependencies
         run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
 
       - name: Install PackageCompiler
@@ -34,7 +33,30 @@ jobs:
 
       - name: Build Executable
         run: |
-          julia --project=. builder.jl
+          julia --project=C214_project builder.jl
+
+      - name: Upload Built Executable Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-executable
+          path: build/*/GetPokemon
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.9'
+
+      - name: Instantiate C214_project Dependencies
+        working-directory: C214_project
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
 
       - name: Run Tests and Save Results
         working-directory: C214_project
@@ -47,10 +69,3 @@ jobs:
         with:
           name: test-results
           path: test_results.log
-
-      - name: Upload Built Executable Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-executable
-          path: build/*/GetPokemon
